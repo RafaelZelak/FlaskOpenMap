@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template, request
 from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
+from geopy.exc import GeocoderUnavailable
+import time
 import json
 import re
 
@@ -17,14 +18,20 @@ def formatar_endereco(endereco):
         return f"{rua}, {cidade}, {estado}, Brasil"
     return endereco
 
-# Função para obter coordenadas
-def obter_coordenadas(endereco):
-    try:
-        location = geolocator.geocode(endereco)
-        if location:
-            return location.latitude, location.longitude
-    except GeocoderTimedOut:
-        print(f"Geocodificação para '{endereco}' falhou.")
+def obter_coordenadas(endereco, max_retry=3, delay=5):
+    for attempt in range(max_retry):
+        try:
+            location = geolocator.geocode(endereco)
+            if location:
+                return location.latitude, location.longitude
+            else:
+                print(f"Endereço '{endereco}' não encontrado.")
+                return None, None
+        except GeocoderUnavailable:
+            print(f"Tentativa {attempt + 1} falhou. Tentando novamente em {delay} segundos...")
+            time.sleep(delay * (attempt + 1))  # Delay progressivo
+
+    print("Não foi possível conectar ao geocodificador após várias tentativas.")
     return None, None
 
 # Processa os dados do arquivo JSON

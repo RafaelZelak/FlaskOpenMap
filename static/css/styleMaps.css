@@ -1,0 +1,29 @@
+body {
+    display: flex;
+    margin: 0;
+    height: 100vh;
+}
+
+#map {
+    flex: 3;
+    height: 100%;
+}
+
+#sidebar {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    background-color: #f4f4f4;
+    border-left: 1px solid #ddd;
+    box-sizing: border-box;
+}
+
+.popup-input {
+    padding: 10px;
+    text-align: center;
+}
+
+.popup-input input[type="number"] {
+    width: 60px;
+    margin-bottom: 10px;
+}
