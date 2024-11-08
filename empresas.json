@@ -1,0 +1,365 @@
+[
+  {
+    "razao_social": "CAPPERO RESTAURANTE LTDA",
+    "cnpj": "17796386000192",
+    "nome_fantasia": "CAPPERO RESTAURANTE",
+    "logradouro": "Doutor faivre, 1022 - Centro - Curitiba - PR, 80060-140",
+    "email": "None",
+    "telefone_1": "4132502721",
+    "telefone_2": "",
+    "capital_social": "80000",
+    "socios": [
+      {
+        "nome": "JOAO FELIPE SOARES DHOM",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "CRACCO RESTAURANTE LTDA",
+    "cnpj": "34937278000101",
+    "nome_fantasia": "CRACCO RESTAURANTE",
+    "logradouro": "Br cento e dezesseis, 19920 - Pinheirinho - Curitiba - PR, 81690-400",
+    "email": "None",
+    "telefone_1": "4132462298",
+    "telefone_2": "",
+    "capital_social": "60000",
+    "socios": [
+      {
+        "nome": "ALICE CRACCO GALIOTTO",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "DIRCEU MERGNER - RESTAURANTE",
+    "cnpj": "18938789000191",
+    "nome_fantasia": "VIP RESTAURANTE",
+    "logradouro": "Luiz tramontin, 2267 - Campo comprido - Curitiba - PR, 81230-161",
+    "email": "None",
+    "telefone_1": "4133732375",
+    "telefone_2": "",
+    "capital_social": "10000",
+    "socios": []
+  },
+  {
+    "razao_social": "FLH RESTAURANTE LTDA",
+    "cnpj": "28255239000121",
+    "nome_fantasia": "FLH RESTAURANTE",
+    "logradouro": "Princesa izabel, 1664 - Bigorrilho - Curitiba - PR, 80730-080",
+    "email": "None",
+    "telefone_1": "4132578610",
+    "telefone_2": "",
+    "capital_social": "100000",
+    "socios": [
+      {
+        "nome": "LEONOR PEREIRA OLIVEIRA CERQUEIRA LEITE",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "JMK RESTAURANTE LTDA",
+    "cnpj": "23058504000168",
+    "nome_fantasia": "RESTAURANTE MIRANDA",
+    "logradouro": "Professor ulisses vieira, 824 - Vila izabel - Curitiba - PR, 80320-090",
+    "email": "None",
+    "telefone_1": "4130778370",
+    "telefone_2": "",
+    "capital_social": "20000",
+    "socios": [
+      {
+        "nome": "JOCIANE DE MIRANDA",
+        "qualificacao": "Socio-Administrador"
+      },
+      {
+        "nome": "MARCELO KORJENIOSKI",
+        "qualificacao": "Socio"
+      }
+    ]
+  },
+  {
+    "razao_social": "KERWALD RESTAURANTE LTDA",
+    "cnpj": "27283561000100",
+    "nome_fantasia": "RESTAURANTE TROPICAL",
+    "logradouro": "Republica argentina, 2220 - Portao - Curitiba - PR, 80610-260",
+    "email": "None",
+    "telefone_1": "4132887345",
+    "telefone_2": "4184511048",
+    "capital_social": "100000",
+    "socios": [
+      {
+        "nome": "ADRIANO GILBERTO RODRIGUES",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "LOZAN'S RESTAURANTE LTDA",
+    "cnpj": "00905073000122",
+    "nome_fantasia": "LOZAN'S RESTAURANTE",
+    "logradouro": "Aminas de barros, 998 - Alto da rua xv - Curitiba - PR, 80045-155",
+    "email": "None",
+    "telefone_1": "4132463673",
+    "telefone_2": "",
+    "capital_social": "75000",
+    "socios": [
+      {
+        "nome": "NACIR TEREZINHA CARVALHO LOZANO",
+        "qualificacao": "Socio-Administrador"
+      },
+      {
+        "nome": "FERNANDA PATRICIA CARVALHO LOZANO",
+        "qualificacao": "Socio-Administrador"
+      },
+      {
+        "nome": "GREICY MURIEL LOZANO RAMOS",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "MISSAO EVANGELICA RESTAURA",
+    "cnpj": "01467551000122",
+    "nome_fantasia": "",
+    "logradouro": "Desembargador joao antonio de barros junior, 303 - Xaxim - Curitiba - PR, 81810-300",
+    "email": "None",
+    "telefone_1": "4199956454",
+    "telefone_2": "",
+    "capital_social": "0",
+    "socios": [
+      {
+        "nome": "NILTON FERREIRA JUNIOR",
+        "qualificacao": "Presidente"
+      }
+    ]
+  },
+  {
+    "razao_social": "PENIEL RESTAURANTE LTDA",
+    "cnpj": "06747949000136",
+    "nome_fantasia": "PENIEL RESTAURANTE",
+    "logradouro": "Mario gomes cezar, 70 - Pinheirinho - Curitiba - PR, 81150-313",
+    "email": "None",
+    "telefone_1": "4130223839",
+    "telefone_2": "",
+    "capital_social": "0",
+    "socios": [
+      {
+        "nome": "REGINALDO CLEDSON GONCALVES DE FREITAS",
+        "qualificacao": "Socio-Administrador"
+      },
+      {
+        "nome": "ANGELA DE SOUZA MOREIRA",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE GUIDOGABI LTDA",
+    "cnpj": "09260844000146",
+    "nome_fantasia": "RESTAURANTE KAYROS",
+    "logradouro": "Sao jose dos pinhais, 161 - Sitio cercado - Curitiba - PR, 81910-010",
+    "email": "None",
+    "telefone_1": "4132656520",
+    "telefone_2": "4132656520",
+    "capital_social": "20000",
+    "socios": [
+      {
+        "nome": "OLINDA CRAIS ALVES",
+        "qualificacao": "Socio-Administrador"
+      },
+      {
+        "nome": "ISAIAS DE SOUZA ALVES",
+        "qualificacao": "Socio"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE HOLANDA LTDA",
+    "cnpj": "08908807000139",
+    "nome_fantasia": "RESTAURANTE HOLANDA",
+    "logradouro": "Hayton da silva pereira, 690 - Capao da imbuia - Curitiba - PR, 82810-170",
+    "email": "None",
+    "telefone_1": "4135286664",
+    "telefone_2": "",
+    "capital_social": "5000",
+    "socios": [
+      {
+        "nome": "EDISON BASSAN DOMIT",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE IBERICO LTDA.",
+    "cnpj": "79632162000100",
+    "nome_fantasia": "RESTAURANTE IBERICO",
+    "logradouro": "Agua verde, 588 - Agua verde - Curitiba - PR, 80620-200",
+    "email": "None",
+    "telefone_1": "4135242900",
+    "telefone_2": "",
+    "capital_social": "500000",
+    "socios": [
+      {
+        "nome": "NELSON GOULART JUNIOR",
+        "qualificacao": "Socio-Administrador"
+      },
+      {
+        "nome": "BRUNO MERCALLI",
+        "qualificacao": "Socio"
+      },
+      {
+        "nome": "CARLOS EDUARDO GONCALVES MATTEUS",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE KAY LTDA",
+    "cnpj": "10419402000189",
+    "nome_fantasia": "RESTAURANTE OHANA",
+    "logradouro": "Da paz, 604 - Centro - Curitiba - PR, 80060-160",
+    "email": "None",
+    "telefone_1": "4130234922",
+    "telefone_2": "",
+    "capital_social": "5000",
+    "socios": [
+      {
+        "nome": "LEDA KAYOKO SATO KAI",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE LINO LTDA",
+    "cnpj": "10972899000168",
+    "nome_fantasia": "RESTAURANTE LINO",
+    "logradouro": "Rua waldemar loureiro campos, 3816 - Xaxim - Curitiba - PR, 81720-180",
+    "email": "None",
+    "telefone_1": "4132756550",
+    "telefone_2": "",
+    "capital_social": "5000",
+    "socios": [
+      {
+        "nome": "DIEFSON DE SOUZA",
+        "qualificacao": "Socio-Administrador"
+      },
+      {
+        "nome": "LUCELENA LINO BATISTA",
+        "qualificacao": "Socio"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE MORRETES LTDA",
+    "cnpj": "20748337000199",
+    "nome_fantasia": "RESTAURANTE MORRETES",
+    "logradouro": "Euzebio da motta, 783 - Alto da gloria - Curitiba - PR, 80530-260",
+    "email": "None",
+    "telefone_1": "4130150134",
+    "telefone_2": "",
+    "capital_social": "30000",
+    "socios": [
+      {
+        "nome": "ADELITA RAPKIEWICZ DE TOLEDO",
+        "qualificacao": "Socio"
+      },
+      {
+        "nome": "JULIO CESAR DAS VIRGENS",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE PEIXAO LTDA",
+    "cnpj": "81740185000172",
+    "nome_fantasia": "RESTAURANTE PEIXAO",
+    "logradouro": "Comendador franco, 4415 - Jardim das americas - Curitiba - PR, 81530-440",
+    "email": "None",
+    "telefone_1": "4130134147",
+    "telefone_2": "",
+    "capital_social": "15000",
+    "socios": [
+      {
+        "nome": "TUAINY DE PAULA KUSTER REINERT ALBUQUERQUE",
+        "qualificacao": "Socio"
+      },
+      {
+        "nome": "CASSIO EDUARDO ALBUQUERQUE",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE SIMONINI LTDA",
+    "cnpj": "08794206000223",
+    "nome_fantasia": "RESTAURANTE SIMONINI",
+    "logradouro": "Machado de assis, 218 - Juveve - Curitiba - PR, 80030-370",
+    "email": "None",
+    "telefone_1": "4130533164",
+    "telefone_2": "",
+    "capital_social": "72400",
+    "socios": [
+      {
+        "nome": "HENRIQUE MEYENBERG",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE SMC LTDA",
+    "cnpj": "05110319000193",
+    "nome_fantasia": "RESTAURANTE AB",
+    "logradouro": "Alferes angelo sampaio, 1896 - Batel - Curitiba - PR, 80420-160",
+    "email": "None",
+    "telefone_1": "4132339327",
+    "telefone_2": "",
+    "capital_social": "0",
+    "socios": [
+      {
+        "nome": "SERGIO DE MORAES CAMPOS",
+        "qualificacao": "Socio"
+      },
+      {
+        "nome": "MARCELO DA SILVA FERREIRA",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE SOLENI'S LTDA",
+    "cnpj": "40511870000140",
+    "nome_fantasia": "RESTAURANTE SOLENI'S",
+    "logradouro": "Daisy luci berno, 3688 - Portao - Curitiba - PR, 80610-350",
+    "email": "None",
+    "telefone_1": "4135285884",
+    "telefone_2": "",
+    "capital_social": "10000",
+    "socios": [
+      {
+        "nome": "SOLENI DE FATIMA FERREIRA",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE WOTKOSKIS LTDA",
+    "cnpj": "36750426000100",
+    "nome_fantasia": "RESTAURANTE FASCINACAO",
+    "logradouro": "Monteiro tourinho, 440 - Tingui - Curitiba - PR, 82600-000",
+    "email": "None",
+    "telefone_1": "4130882477",
+    "telefone_2": "4130909336",
+    "capital_social": "40000",
+    "socios": [
+      {
+        "nome": "ROBERTO PEDRO WOTKOSKI",
+        "qualificacao": "Socio"
+      },
+      {
+        "nome": "PAULO WOTKOSKI FILHO",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  }
+]
