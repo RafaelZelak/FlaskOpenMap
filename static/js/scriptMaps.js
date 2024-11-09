@@ -1,7 +1,8 @@
-const map = L.map('map').setView([-14.235, -51.9253], 4); // Brasil como visão inicial
+// Inicialização do mapa com vista inicial para o Brasil
+const map = L.map('map').setView([-14.235, -51.9253], 4);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
+    maxZoom: 20,
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
@@ -9,6 +10,10 @@ const markers = [];
 const bounds = L.latLngBounds();
 let currentCircle = null;
 let firstPointLoaded = false;
+
+// Variáveis para o raio atual e ponto central para atualizar a lista dinamicamente
+let raioAtual = null;
+let pontoCentral = null;
 
 const MAX_CONCURRENT_REQUESTS = 5; // Limite de requisições simultâneas
 const BATCH_DELAY = 2000; // Espera entre os lotes de requisições (em ms)
@@ -33,9 +38,9 @@ async function loadAndDisplayPoint(index, retry = 0, maxRetry = 3) {
                 `);
                 markers.push({ marker, data: empresa });
 
-                // Ajuste da visão do mapa para incluir todos os pontos
+                // Ajusta a visão do mapa para incluir todos os pontos
                 bounds.extend(marker.getLatLng());
-                map.fitBounds(bounds, { padding: [20, 20] });
+                map.fitBounds(bounds, { padding: [10, 10] });
 
                 firstPointLoaded = true;
 
@@ -44,6 +49,11 @@ async function loadAndDisplayPoint(index, retry = 0, maxRetry = 3) {
                     const button = document.getElementById(`calc-btn-${empresa.nome_fantasia}`);
                     button.addEventListener('click', () => calcularDistancia(empresa.latitude, empresa.longitude, empresa.nome_fantasia));
                 });
+
+                // Verifica se o ponto está dentro do raio atual
+                if (raioAtual && pontoCentral) {
+                    verificarDistanciaParaNovoPonto(empresa);
+                }
             }
         } else if (retry < maxRetry) {
             console.warn(`Ponto ${index} não encontrado. Tentando novamente...`);
@@ -94,28 +104,97 @@ function calcularDistancia(lat, lng, nomeFantasia) {
         return;
     }
 
+    // Atualiza o raio e o ponto central atuais
+    raioAtual = raioKm * 1000; // Armazena o raio em metros
+    pontoCentral = [lat, lng]; // Armazena o ponto central
+
     if (currentCircle) {
         currentCircle.remove();
     }
 
     currentCircle = L.circle([lat, lng], {
-        radius: raioKm * 1000,
-        color: 'blue',
+        radius: raioAtual,
+        color: '#3f83f8B3',
         fillColor: '#3f83f8',
-        fillOpacity: 0.3
+        fillOpacity: 0.15
     }).addTo(map);
 
+    // Atualiza a lista de resultados
+    atualizarListaDeResultados();
+}
+
+// Função para atualizar a lista de pontos dentro do raio e organizar por categorias
+function atualizarListaDeResultados() {
     const resultList = document.getElementById('result-list');
     resultList.innerHTML = '';
 
-    markers.forEach(({ marker, data }) => {
-        const distancia = map.distance([lat, lng], [data.latitude, data.longitude]);
-        if (distancia <= raioKm * 1000) {
-            const listItem = document.createElement('li');
-            listItem.textContent = `${data.nome_fantasia} - Distância: ${(distancia / 1000).toFixed(2)} km`;
-            resultList.appendChild(listItem);
+    // Filtra e organiza pontos com distância calculada
+    const pontosDistancia = markers
+        .map(({ marker, data }) => {
+            const distancia = map.distance(pontoCentral, [data.latitude, data.longitude]);
+            return { data, distancia, marker };
+        })
+        .filter(({ distancia }) => distancia <= raioAtual)
+        .sort((a, b) => a.distancia - b.distancia);
+
+    // Cria um conjunto para armazenar combinações únicas de nome e distância
+    const uniqueResults = new Set();
+
+    // Define categorias de distância
+    const categorias = [
+        { label: 'Até 1 km', limite: 1000 },
+        { label: 'Até 5 km', limite: 5000 }
+    ];
+
+    for (let i = 1; i <= Math.ceil(raioAtual / 5000); i++) {
+        categorias.push({ label: `Até ${i * 5} km`, limite: i * 5000 });
+    }
+
+    // Filtra e exibe os pontos em cada categoria, evitando duplicatas
+    categorias.forEach(categoria => {
+        const categoriaPontos = pontosDistancia.filter(({ distancia }) => distancia <= categoria.limite);
+        if (categoriaPontos.length > 0) {
+            const header = document.createElement('h4');
+            header.textContent = categoria.label;
+            resultList.appendChild(header);
+
+            categoriaPontos.forEach(({ data, distancia, marker }) => {
+                const uniqueKey = `${data.nome_fantasia}-${distancia.toFixed(2)}`;
+
+                if (!uniqueResults.has(uniqueKey)) {
+                    uniqueResults.add(uniqueKey);
+
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${data.nome_fantasia} - Distância: ${(distancia / 1000).toFixed(2)} km`;
+
+                    // Destaca o ponto central
+                    if (distancia === 0) {
+                        listItem.style.fontWeight = 'bold';
+                        listItem.style.color = 'red';
+                    }
+
+                    // Adiciona o evento de clique para focar no ponto no mapa
+                    listItem.addEventListener('click', () => {
+                        map.setView(marker.getLatLng(), 15);
+                        marker.openPopup();
+                    });
+
+                    resultList.appendChild(listItem);
+                }
+            });
+
+            // Remove os pontos exibidos da lista para evitar repetição em várias categorias
+            pontosDistancia.splice(0, categoriaPontos.length);
         }
     });
+}
+
+// Função para verificar se um novo ponto está dentro do raio atual e atualizar a lista
+function verificarDistanciaParaNovoPonto(data) {
+    const distancia = map.distance(pontoCentral, [data.latitude, data.longitude]);
+    if (distancia <= raioAtual) {
+        atualizarListaDeResultados();
+    }
 }
 
 // Inicia o carregamento dos pontos

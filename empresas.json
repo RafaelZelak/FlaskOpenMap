@@ -289,5 +289,172 @@
         "qualificacao": "Socio-Administrador"
       }
     ]
+  },
+  {
+    "razao_social": "RESTAURANTE SIMONINI LTDA",
+    "cnpj": "08794206000223",
+    "nome_fantasia": "RESTAURANTE SIMONINI",
+    "logradouro": "Machado de assis, 218 - Juveve - Curitiba - PR, 80030-370",
+    "email": "None",
+    "telefone_1": "4130533164",
+    "telefone_2": "",
+    "capital_social": "72400",
+    "socios": [
+      {
+        "nome": "HENRIQUE MEYENBERG",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE SMC LTDA",
+    "cnpj": "05110319000193",
+    "nome_fantasia": "RESTAURANTE AB",
+    "logradouro": "Alferes angelo sampaio, 1896 - Batel - Curitiba - PR, 80420-160",
+    "email": "None",
+    "telefone_1": "4132339327",
+    "telefone_2": "",
+    "capital_social": "0",
+    "socios": [
+      {
+        "nome": "SERGIO DE MORAES CAMPOS",
+        "qualificacao": "Socio"
+      },
+      {
+        "nome": "MARCELO DA SILVA FERREIRA",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE SOLENI'S LTDA",
+    "cnpj": "40511870000140",
+    "nome_fantasia": "RESTAURANTE SOLENI'S",
+    "logradouro": "Daisy luci berno, 3688 - Portao - Curitiba - PR, 80610-350",
+    "email": "None",
+    "telefone_1": "4135285884",
+    "telefone_2": "",
+    "capital_social": "10000",
+    "socios": [
+      {
+        "nome": "SOLENI DE FATIMA FERREIRA",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "RESTAURANTE WOTKOSKIS LTDA",
+    "cnpj": "36750426000100",
+    "nome_fantasia": "RESTAURANTE FASCINACAO",
+    "logradouro": "Monteiro tourinho, 440 - Tingui - Curitiba - PR, 82600-000",
+    "email": "None",
+    "telefone_1": "4130882477",
+    "telefone_2": "4130909336",
+    "capital_social": "40000",
+    "socios": [
+      {
+        "nome": "ROBERTO PEDRO WOTKOSKI",
+        "qualificacao": "Socio"
+      },
+      {
+        "nome": "PAULO WOTKOSKI FILHO",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "CAPPERO RESTAURANTE LTDA",
+    "cnpj": "17796386000192",
+    "nome_fantasia": "CAPPERO RESTAURANTE",
+    "logradouro": "Doutor faivre, 1022 - Centro - Curitiba - PR, 80060-140",
+    "email": "None",
+    "telefone_1": "4132502721",
+    "telefone_2": "",
+    "capital_social": "80000",
+    "socios": [
+      {
+        "nome": "JOAO FELIPE SOARES DHOM",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "CHAVES RESTAURANTE LTDA",
+    "cnpj": "49911314000135",
+    "nome_fantasia": "RESTAURANTE CHAVES",
+    "logradouro": "Alcino guanabara, 1013 - Hauer - Curitiba - PR, 81630-190",
+    "email": "None",
+    "telefone_1": "4132055372",
+    "telefone_2": "000000000000",
+    "capital_social": "10000",
+    "socios": [
+      {
+        "nome": "PAULO ROBERTO CHAVES DE OLIVEIRA",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "CRACCO RESTAURANTE LTDA",
+    "cnpj": "34937278000101",
+    "nome_fantasia": "CRACCO RESTAURANTE",
+    "logradouro": "Br cento e dezesseis, 19920 - Pinheirinho - Curitiba - PR, 81690-400",
+    "email": "None",
+    "telefone_1": "4132462298",
+    "telefone_2": "",
+    "capital_social": "60000",
+    "socios": [
+      {
+        "nome": "ALICE CRACCO GALIOTTO",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "FLH RESTAURANTE LTDA",
+    "cnpj": "28255239000121",
+    "nome_fantasia": "FLH RESTAURANTE",
+    "logradouro": "Princesa izabel, 1664 - Bigorrilho - Curitiba - PR, 80730-080",
+    "email": "None",
+    "telefone_1": "4132578610",
+    "telefone_2": "",
+    "capital_social": "100000",
+    "socios": [
+      {
+        "nome": "LEONOR PEREIRA OLIVEIRA CERQUEIRA LEITE",
+        "qualificacao": "Socio-Administrador"
+      }
+    ]
+  },
+  {
+    "razao_social": "IVETE FERREIRA RESTAURANTE",
+    "cnpj": "80370430000134",
+    "nome_fantasia": "IVETE RESTAURANTE",
+    "logradouro": "Desembargador cid campelo, 3636 - Cidade industrial - Curitiba - PR, 81170-350",
+    "email": "None",
+    "telefone_1": "4133270365",
+    "telefone_2": "4130772733",
+    "capital_social": "0",
+    "socios": []
+  },
+  {
+    "razao_social": "JMK RESTAURANTE LTDA",
+    "cnpj": "23058504000168",
+    "nome_fantasia": "RESTAURANTE MIRANDA",
+    "logradouro": "Professor ulisses vieira, 824 - Vila izabel - Curitiba - PR, 80320-090",
+    "email": "None",
+    "telefone_1": "4130778370",
+    "telefone_2": "",
+    "capital_social": "20000",
+    "socios": [
+      {
+        "nome": "JOCIANE DE MIRANDA",
+        "qualificacao": "Socio-Administrador"
+      },
+      {
+        "nome": "MARCELO KORJENIOSKI",
+        "qualificacao": "Socio"
+      }
+    ]
   }
 ]
