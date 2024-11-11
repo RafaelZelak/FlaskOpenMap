@@ -35,7 +35,7 @@ def formatar_endereco(endereco):
 
         # Busca o nome correto da rua pelo CEP
         rua_correta = buscar_endereco_por_cep(cep) or logradouro_inicial
-        return f"{rua_correta} {numero}, {bairro}, {cidade}, {estado}, Brasil"
+        return f"{rua_correta} {numero}, {cidade}, Brasil"
     return endereco
 
 def obter_coordenadas(endereco, tentativas=3, espera=5):
