@@ -11,15 +11,15 @@ const bounds = L.latLngBounds();
 let currentCircle = null;
 let firstPointLoaded = false;
 
-// Variáveis para o raio atual e ponto central para atualizar a lista dinamicamente
+// Variáveis para controle do raio e ponto central
 let raioAtual = null;
 let pontoCentral = null;
 
 const MAX_CONCURRENT_REQUESTS = 5; // Limite de requisições simultâneas
-const BATCH_DELAY = 2000; // Espera entre os lotes de requisições (em ms)
-const RETRY_DELAY = 3000; // Atraso para novas tentativas (em ms)
+const BATCH_DELAY = 2000; // Atraso entre lotes de requisições (em ms)
+const RETRY_DELAY = 3000; // Atraso para novas tentativas de requisição (em ms)
 
-// Função para carregar e exibir cada ponto
+// Função para carregar e exibir um ponto específico
 async function loadAndDisplayPoint(index, retry = 0, maxRetry = 3) {
     try {
         const response = await fetch(`/api/empresa?id=${index}`);
@@ -32,25 +32,21 @@ async function loadAndDisplayPoint(index, retry = 0, maxRetry = 3) {
                     ${empresa.endereco}<br>
                     ${empresa.telefone_1}<br>
                     <div class="popup-input">
-                        <input type="number" placeholder="Raio (km)" id="raio-${empresa.nome_fantasia}">
-                        <button id="calc-btn-${empresa.nome_fantasia}">Calcular</button>
+                        <input type="number" placeholder="Raio (km)" id="raio-${empresa.nome_fantasia}" class="border border-gray-300 rounded p-1 w-20">
+                        <button id="calc-btn-${empresa.nome_fantasia}" class="bg-blue-500 text-white px-2 py-1 rounded ml-2">Calcular</button>
                     </div>
                 `);
                 markers.push({ marker, data: empresa });
 
-                // Ajusta a visão do mapa para incluir todos os pontos
                 bounds.extend(marker.getLatLng());
                 map.fitBounds(bounds, { padding: [10, 10] });
-
                 firstPointLoaded = true;
 
-                // Adiciona evento ao botão de cálculo
                 marker.on('popupopen', () => {
                     const button = document.getElementById(`calc-btn-${empresa.nome_fantasia}`);
                     button.addEventListener('click', () => calcularDistancia(empresa.latitude, empresa.longitude, empresa.nome_fantasia));
                 });
 
-                // Verifica se o ponto está dentro do raio atual
                 if (raioAtual && pontoCentral) {
                     verificarDistanciaParaNovoPonto(empresa);
                 }
@@ -58,35 +54,28 @@ async function loadAndDisplayPoint(index, retry = 0, maxRetry = 3) {
         } else if (retry < maxRetry) {
             console.warn(`Ponto ${index} não encontrado. Tentando novamente...`);
             await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retry + 1)));
-            return loadAndDisplayPoint(index, retry + 1); // Nova tentativa com delay progressivo
+            return loadAndDisplayPoint(index, retry + 1);
         }
     } catch (error) {
         console.error(`Erro ao carregar ponto ${index}:`, error);
     }
 }
 
-// Função para carregar os pontos em lotes com limite de concorrência
+// Função para carregar todos os pontos
 async function loadAllPoints() {
     const response = await fetch('/api/empresas/total');
     const data = await response.json();
     const totalPoints = data.total;
 
-    // Divide em lotes para limitar requisições simultâneas
     for (let i = 0; i < totalPoints; i += MAX_CONCURRENT_REQUESTS) {
         const batch = [];
-
         for (let j = 0; j < MAX_CONCURRENT_REQUESTS && i + j < totalPoints; j++) {
             batch.push(loadAndDisplayPoint(i + j));
         }
-
-        // Aguarda as requisições do lote serem concluídas antes de passar para o próximo
         await Promise.all(batch);
-
-        // Aguarda um pouco antes de iniciar o próximo lote para evitar o limite
         await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
     }
 
-    // Se nenhum ponto carregar, manter o mapa com visão do Brasil
     setTimeout(() => {
         if (!firstPointLoaded) {
             map.setView([-14.235, -51.9253], 4);
@@ -94,7 +83,7 @@ async function loadAllPoints() {
     }, totalPoints * 500);
 }
 
-// Função para calcular e exibir os pontos dentro do raio
+// Função para calcular a distância e exibir os pontos dentro do raio
 function calcularDistancia(lat, lng, nomeFantasia) {
     const raioInput = document.getElementById(`raio-${nomeFantasia}`);
     const raioKm = parseFloat(raioInput.value);
@@ -104,9 +93,8 @@ function calcularDistancia(lat, lng, nomeFantasia) {
         return;
     }
 
-    // Atualiza o raio e o ponto central atuais
-    raioAtual = raioKm * 1000; // Armazena o raio em metros
-    pontoCentral = [lat, lng]; // Armazena o ponto central
+    raioAtual = raioKm * 1000;
+    pontoCentral = [lat, lng];
 
     if (currentCircle) {
         currentCircle.remove();
@@ -114,66 +102,95 @@ function calcularDistancia(lat, lng, nomeFantasia) {
 
     currentCircle = L.circle([lat, lng], {
         radius: raioAtual,
-        color: '#3f83f8B3',
+        color: '#3f83f8',
         fillColor: '#3f83f8',
         fillOpacity: 0.15
     }).addTo(map);
 
-    // Atualiza a lista de resultados
     atualizarListaDeResultados();
 }
 
-// Função para atualizar a lista de pontos dentro do raio e organizar por categorias
+function criarIconePersonalizado(cor) {
+    return L.icon({
+        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${cor}.png`,
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+}
+
+// Atualiza a lista de resultados com categorias de distância
+// Atualiza a lista de resultados com categorias de distância
 function atualizarListaDeResultados() {
     const resultList = document.getElementById('result-list');
-    resultList.innerHTML = '';
+    const resultCount = document.getElementById('result-count');
+    resultList.innerHTML = ''; // Limpa a lista antes de adicionar novos resultados
 
-    // Filtra e organiza pontos com distância calculada
+    // Filtra os pontos que estão dentro do raio
     const pontosDistancia = markers
         .map(({ marker, data }) => {
             const distancia = map.distance(pontoCentral, [data.latitude, data.longitude]);
             return { data, distancia, marker };
         })
-        .filter(({ distancia }) => distancia <= raioAtual)
+        .filter(({ distancia }) => distancia <= raioAtual) // Mantém somente os pontos dentro do raio
         .sort((a, b) => a.distancia - b.distancia);
 
-    // Cria um conjunto para armazenar combinações únicas de nome e distância
-    const uniqueResults = new Set();
+    // Atualiza o contador com o número de resultados
+    resultCount.textContent = `${pontosDistancia.length} resultados`;
 
-    // Define categorias de distância
-    const categorias = [
-        { label: 'Até 1 km', limite: 1000 },
-        { label: 'Até 5 km', limite: 5000 }
-    ];
-
-    for (let i = 1; i <= Math.ceil(raioAtual / 5000); i++) {
-        categorias.push({ label: `Até ${i * 5} km`, limite: i * 5000 });
+    // Se não houver nenhum ponto, exibe uma mensagem
+    if (pontosDistancia.length === 0) {
+        resultList.innerHTML = '<p class="text-gray-500">Nenhum ponto encontrado dentro do raio especificado.</p>';
+        return;
     }
 
-    // Filtra e exibe os pontos em cada categoria, evitando duplicatas
+    // Restante do código de exibição dos pontos
+    const uniqueResults = new Set();
+    const maxDistance = pontosDistancia[pontosDistancia.length - 1].distancia;
+
+    const categorias = [
+        { label: 'Até 1 km', limite: 1000 },
+        ...Array.from({ length: Math.ceil(maxDistance / 5000) }, (_, i) => ({
+            label: `Até ${(i + 1) * 5} km`,
+            limite: (i + 1) * 5000
+        }))
+    ];
+
     categorias.forEach(categoria => {
         const categoriaPontos = pontosDistancia.filter(({ distancia }) => distancia <= categoria.limite);
+
         if (categoriaPontos.length > 0) {
             const header = document.createElement('h4');
             header.textContent = categoria.label;
+            header.className = 'text-lg font-medium mt-4';
             resultList.appendChild(header);
 
             categoriaPontos.forEach(({ data, distancia, marker }) => {
                 const uniqueKey = `${data.nome_fantasia}-${distancia.toFixed(2)}`;
-
                 if (!uniqueResults.has(uniqueKey)) {
                     uniqueResults.add(uniqueKey);
 
                     const listItem = document.createElement('li');
-                    listItem.textContent = `${data.nome_fantasia} - Distância: ${(distancia / 1000).toFixed(2)} km`;
+                    listItem.className = 'p-2 bg-blue-100 rounded shadow hover:bg-blue-200 cursor-pointer';
+                    listItem.textContent = `${data.nome_fantasia} - ${(distancia / 1000).toFixed(2)} km`;
 
-                    // Destaca o ponto central
                     if (distancia === 0) {
-                        listItem.style.fontWeight = 'bold';
-                        listItem.style.color = 'red';
+                        marker.setIcon(criarIconePersonalizado('red'));
+                        listItem.className += ' font-bold text-red-500';
+                    } else {
+                        marker.setIcon(criarIconePersonalizado('blue'));
                     }
 
-                    // Adiciona o evento de clique para focar no ponto no mapa
+                    listItem.addEventListener('mouseover', () => {
+                        marker.setIcon(criarIconePersonalizado('orange'));
+                    });
+
+                    listItem.addEventListener('mouseout', () => {
+                        marker.setIcon(criarIconePersonalizado(distancia === 0 ? 'red' : 'blue'));
+                    });
+
                     listItem.addEventListener('click', () => {
                         map.setView(marker.getLatLng(), 15);
                         marker.openPopup();
@@ -182,14 +199,12 @@ function atualizarListaDeResultados() {
                     resultList.appendChild(listItem);
                 }
             });
-
-            // Remove os pontos exibidos da lista para evitar repetição em várias categorias
-            pontosDistancia.splice(0, categoriaPontos.length);
         }
     });
 }
 
-// Função para verificar se um novo ponto está dentro do raio atual e atualizar a lista
+
+// Verifica e atualiza a lista ao adicionar novos pontos
 function verificarDistanciaParaNovoPonto(data) {
     const distancia = map.distance(pontoCentral, [data.latitude, data.longitude]);
     if (distancia <= raioAtual) {
@@ -197,5 +212,5 @@ function verificarDistanciaParaNovoPonto(data) {
     }
 }
 
-// Inicia o carregamento dos pontos
+// Carrega todos os pontos
 loadAllPoints();
