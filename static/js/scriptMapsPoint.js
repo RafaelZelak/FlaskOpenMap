@@ -103,15 +103,22 @@ async function carregarPontosDentroDoRaio() {
 
             empresas.forEach(empresa => {
                 if (empresa.latitude && empresa.longitude) {
-                    const distancia = map.distance(pontoCentral, [empresa.latitude, empresa.longitude]);
-                    if (distancia <= raioAtual) {
-                        const marker = L.marker([empresa.latitude, empresa.longitude]).addTo(map);
-                        marker.bindPopup(`
-                            <b>${empresa.nome_fantasia}</b><br>
-                            ${empresa.endereco}<br>
-                            ${empresa.cnpj}
-                        `);
-                        markers.push(marker);
+                    // Verifica se é o ponto central, para não adicionar um marcador adicional
+                    const isPontoCentral =
+                        empresa.latitude === pontoCentral[0] &&
+                        empresa.longitude === pontoCentral[1];
+
+                    if (!isPontoCentral) {
+                        const distancia = map.distance(pontoCentral, [empresa.latitude, empresa.longitude]);
+                        if (distancia <= raioAtual) {
+                            const marker = L.marker([empresa.latitude, empresa.longitude]).addTo(map);
+                            marker.bindPopup(`
+                                <b>${empresa.nome_fantasia}</b><br>
+                                ${empresa.endereco}<br>
+                                ${empresa.cnpj}
+                            `);
+                            markers.push(marker);
+                        }
                     }
                 }
             });
@@ -125,11 +132,14 @@ async function carregarPontosDentroDoRaio() {
 
 // Função para criar ícone personalizado
 function criarIconePersonalizado(cor) {
+    const iconSize = cor === 'red' ? [40, 65] : [25, 41]; // Ícone maior para o ponto central
+    const iconAnchor = cor === 'red' ? [20, 65] : [12, 41];
+
     return L.icon({
         iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${cor}.png`,
         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
+        iconSize: iconSize,
+        iconAnchor: iconAnchor,
         popupAnchor: [1, -34],
         shadowSize: [41, 41]
     });
