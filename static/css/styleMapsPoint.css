@@ -1,0 +1,23 @@
+/* Estilo básico para garantir boa aparência e usabilidade */
+body {
+    margin: 0;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+#sidebar h3 {
+    color: #1f2937; /* Azul escuro para destaque */
+}
+
+.marker-default {
+    transition: border 0.3s ease, transform 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.marker-hover {
+    border-color: orange;
+    transform: scale(1.1);
+}

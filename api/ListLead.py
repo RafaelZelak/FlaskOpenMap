@@ -25,17 +25,20 @@ def get_crm_lead_list():
         else:
             leads = result.get("result", [])
 
-            # Exibe os dados dos leads que contêm "Via Automação" no nome
-            print("Lista completa de leads com 'Via Automação' no nome da empresa:")
+            # Exibe os dados dos leads filtrados por "Via Automação"
+            print("Lista de leads filtrados com 'Via Automação':")
             for lead in leads:
                 lead_id = lead.get("ID")
+
+                # Nome da empresa, usando 'TITLE' ou 'UF_CRM_1729682188409' se for customizado
                 company_name = lead.get("TITLE") or lead.get("UF_CRM_1729682188409")
 
-                # Verifica se o nome da empresa contém "Via Automação"
+                # Filtra apenas leads que possuem "Via Automação" no nome da empresa
                 if company_name and "Via Automação" in company_name:
-                    # Mostra todos os dados do lead para diagnóstico
-                    print(f"\nLead ID: {lead_id}")
-                    print(json.dumps(lead, indent=4, ensure_ascii=False))  # Mostra todo o conteúdo JSON do lead
+                    # CNPJ e Endereço usando IDs personalizados
+                    cnpj = lead.get("UF_CRM_1729682208297")         # CNPJ
+                    endereco = lead.get("UF_CRM_1729682242372")     # Endereço
+                    print(f"ID: {lead_id}, Nome da Empresa: {company_name}, CNPJ: {cnpj}, Endereço: {endereco}")
 
             # Paginação para obter mais resultados, se houver
             start = result.get("next", None)
@@ -51,8 +54,9 @@ def get_crm_lead_list():
                         company_name = lead.get("TITLE") or lead.get("UF_CRM_1729682188409")
 
                         if company_name and "Via Automação" in company_name:
-                            print(f"\nLead ID: {lead_id}")
-                            print(json.dumps(lead, indent=4, ensure_ascii=False))
+                            cnpj = lead.get("UF_CRM_1729682208297")
+                            endereco = lead.get("UF_CRM_1729682242372")
+                            print(f"ID: {lead_id}, Nome da Empresa: {company_name}, CNPJ: {cnpj}, Endereço: {endereco}")
 
                     start = result.get("next", None)
                 else:

@@ -2,41 +2,10 @@ from flask import Flask, jsonify, render_template, request
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderUnavailable
 import time
-import json
-import re
-import requests  # Biblioteca necessária para realizar chamadas à API de CEP
+import csv  # Necessário para manipular CSV
 
 app = Flask(__name__)
 geolocator = Nominatim(user_agent="geoapi_exercises", timeout=10)
-
-# Função para buscar o endereço completo a partir do CEP
-def buscar_endereco_por_cep(cep):
-    try:
-        response = requests.get(f"https://viacep.com.br/ws/{cep}/json/")
-        if response.status_code == 200:
-            data = response.json()
-            if "erro" not in data:
-                return data['logradouro']
-        print(f"Endereço não encontrado para o CEP {cep}")
-    except Exception as e:
-        print(f"Erro ao buscar o CEP {cep}: {e}")
-    return None
-
-# Função para extrair o CEP e formatar o endereço
-def formatar_endereco(endereco):
-    match = re.match(r'([^,]+),\s*(\d+)\s*-\s*([^,]+)\s*-\s*([^,]+)\s*-\s*([A-Z]{2}),\s*(\d{5}-\d{3})', endereco)
-    if match:
-        logradouro_inicial = match.group(1).strip()
-        numero = match.group(2).strip()
-        bairro = match.group(3).strip()
-        cidade = match.group(4).strip()
-        estado = match.group(5).strip()
-        cep = match.group(6).replace("-", "").strip()
-
-        # Busca o nome correto da rua pelo CEP
-        rua_correta = buscar_endereco_por_cep(cep) or logradouro_inicial
-        return f"{rua_correta} {numero}, {cidade}, Brasil"
-    return endereco
 
 def obter_coordenadas(endereco, tentativas=3, espera=5):
     for tentativa in range(tentativas):
@@ -53,12 +22,26 @@ def obter_coordenadas(endereco, tentativas=3, espera=5):
     print("Falha ao obter coordenadas após várias tentativas.")
     return None, None
 
-# Processa os dados do arquivo JSON
+# Função para carregar dados do CSV
 def carregar_empresas():
-    with open('empresas.json', 'r', encoding='utf-8') as file:
-        return json.load(file)
+    empresas = []
+    with open('./data/empresas.csv', newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            empresas.append({
+                "razao_social": row.get("razao_social"),
+                "cnpj": row.get("cnpj"),
+                "nome_fantasia": row.get("razao_social"),  # Caso não tenha um campo específico de nome fantasia
+                "logradouro": row.get("endereco")
+            })
+    return empresas
 
 empresas = carregar_empresas()
+
+# Contadores de sucesso e falha
+total_processadas = 0
+total_sucesso = 0
+total_falha = 0
 
 @app.route('/')
 def index():
@@ -70,22 +53,41 @@ def total_empresas():
 
 @app.route('/api/empresa')
 def empresa():
+    global total_processadas, total_sucesso, total_falha
     index = int(request.args.get('id', 0))
+    total_processadas += 1
+
     if index < len(empresas):
         empresa = empresas[index]
         logradouro = empresa.get("logradouro")
         if logradouro:
-            endereco_formatado = formatar_endereco(logradouro)
-            latitude, longitude = obter_coordenadas(endereco_formatado)
+            latitude, longitude = obter_coordenadas(logradouro)
             if latitude and longitude:
-                return jsonify({
-                    "nome_fantasia": empresa.get("nome_fantasia", "Nome não disponível"),
-                    "endereco": endereco_formatado,
-                    "telefone_1": empresa.get("telefone_1", "Telefone não disponível"),
-                    "latitude": latitude,
-                    "longitude": longitude
-                })
-    return jsonify({}), 404
+                total_sucesso += 1
+            else:
+                total_falha += 1
+        else:
+            total_falha += 1
+
+        # Calcular porcentagens de sucesso e falha
+        porcentagem_sucesso = (total_sucesso / total_processadas) * 100
+        porcentagem_falha = (total_falha / total_processadas) * 100
+
+        return jsonify({
+            "nome_fantasia": empresa.get("nome_fantasia", "Nome não disponível"),
+            "endereco": logradouro,
+            "cnpj": empresa.get("cnpj", "CNPJ não disponível"),
+            "latitude": latitude if latitude else "Não disponível",
+            "longitude": longitude if longitude else "Não disponível",
+            "percentual_sucesso": f"{porcentagem_sucesso:.2f}%",
+            "percentual_falha": f"{porcentagem_falha:.2f}%"
+        })
+
+    return jsonify({
+        "message": "Empresa não encontrada.",
+        "percentual_sucesso": f"{(total_sucesso / total_processadas) * 100:.2f}%",
+        "percentual_falha": f"{(total_falha / total_processadas) * 100:.2f}%"
+    }), 404
 
 if __name__ == '__main__':
     app.run(debug=True)

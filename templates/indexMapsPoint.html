@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa com Pontos Específicos</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styleMapsPoint.css') }}">
+</head>
+<body class="flex flex-col md:flex-row h-screen bg-gray-100">
+
+    <!-- Mapa -->
+    <div id="map" class="flex-1 h-2/3 md:h-full"></div>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="flex-1 max-w-md p-4 bg-white shadow-lg overflow-y-auto">
+        <h3 class="text-2xl font-bold mb-4 flex justify-between items-center">
+            Pontos dentro do raio
+            <span id="result-count" class="text-sm font-medium text-gray-600">0 resultados</span>
+        </h3>
+        <ul id="result-list" class="space-y-2"></ul>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='js/scriptMapsPoint.js') }}"></script>
+</body>
+</html>
