@@ -15,6 +15,10 @@
 
     <!-- Sidebar -->
     <div id="sidebar" class="flex-1 max-w-md p-4 bg-white shadow-lg overflow-y-auto">
+        <div class="relative mb-4">
+            <input type="text" id="empresa-dropdown" class="w-full p-2 border border-gray-300 rounded" placeholder="Selecione uma empresa..." autocomplete="off">
+            <ul id="empresa-list" class="absolute bg-white border border-gray-300 rounded w-full max-h-48 overflow-y-auto hidden"></ul>
+        </div>
         <h3 class="text-2xl font-bold mb-4 flex justify-between items-center">
             Pontos dentro do raio
             <span id="result-count" class="text-sm font-medium text-gray-600">0 resultados</span>

@@ -1,28 +1,29 @@
 from flask import Flask, jsonify, render_template, request
 import pandas as pd
+import math
 
 app = Flask(__name__)
 
 # Função para carregar dados do CSV usando Pandas
 def carregar_empresas():
-    # Carregar o CSV e converter diretamente a coluna de coordenadas
     def converter_coordenadas(coord):
-        # Converte coordenadas para tupla de floats ou retorna (None, None) para 'N/A'
         if coord == "['N/A', 'N/A']":
             return None, None
         try:
-            # Remove caracteres indesejados e separa as coordenadas
             coord = coord.strip("[]").split(",")
             return float(coord[0]), float(coord[1])
         except ValueError:
             return None, None
 
-    # Carrega o CSV e aplica a conversão de coordenadas automaticamente
     df = pd.read_csv('./data/empresas.csv', encoding='utf-8')
     df[['latitude', 'longitude']] = df['coord'].apply(lambda x: pd.Series(converter_coordenadas(x)))
-
-    # Filtra as empresas com coordenadas válidas e converte para uma lista de dicionários
     empresas = df.drop(columns=['coord']).to_dict(orient='records')
+
+    # Remover ou substituir valores inválidos (NaN, None) para evitar erros de JSON
+    for empresa in empresas:
+        for key, value in empresa.items():
+            if isinstance(value, float) and (math.isnan(value) or value is None):
+                empresa[key] = None  # Substituir NaN com None
     return empresas
 
 empresas = carregar_empresas()
@@ -34,7 +35,7 @@ total_falha = 0
 
 @app.route('/')
 def index():
-    return render_template('indexMaps.html')
+    return render_template('indexMapsPoint.html')
 
 @app.route('/api/empresas/total')
 def total_empresas():
@@ -76,6 +77,11 @@ def empresa():
         "percentual_sucesso": f"{(total_sucesso / total_processadas) * 100:.2f}%",
         "percentual_falha": f"{(total_falha / total_processadas) * 100:.2f}%"
     }), 404
+
+@app.route('/api/empresas')
+def listar_empresas():
+    global empresas
+    return jsonify(empresas)
 
 if __name__ == '__main__':
     app.run(debug=True)

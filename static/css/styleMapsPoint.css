@@ -21,3 +21,16 @@ body {
     border-color: orange;
     transform: scale(1.1);
 }
+
+#empresa-list {
+    z-index: 1000;
+}
+
+#empresa-list li {
+    padding: 8px;
+    cursor: pointer;
+}
+
+#empresa-list li:hover {
+    background-color: #f0f0f0;
+}
