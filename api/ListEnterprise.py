@@ -1,81 +1,143 @@
-from flask import Flask, jsonify, render_template, request
-import pandas as pd
+import requests
+import time
+import csv
+import os
+from geopy.geocoders import Nominatim
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
-app = Flask(__name__)
+BITRIX_URL = "https://setup.bitrix24.com.br/rest/301/gyer7nrqxonhk609/crm.company.list.json"
+BRASILAPI_URL = "https://brasilapi.com.br/api/cnpj/v1/"
+DELAY_INCREMENT = 0
 
-# Função para carregar dados do CSV usando Pandas
-def carregar_empresas():
-    # Carregar o CSV e converter diretamente a coluna de coordenadas
-    def converter_coordenadas(coord):
-        # Converte coordenadas para tupla de floats ou retorna (None, None) para 'N/A'
-        if coord == "['N/A', 'N/A']":
-            return None, None
+geolocator = Nominatim(user_agent="MeuProjetoGeoAPI - Rafael Zelak", timeout=10)
+
+def create_session_with_retry():
+    session = requests.Session()
+    retry = Retry(
+        total=5,  # Número máximo de re-tentativas
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504]
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
+
+def save_companies_to_csv(companies, filename="data/empresas.csv"):
+    existing_cnpjs = set()
+    if os.path.isfile(filename):
+        with open(filename, mode='r', newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            existing_cnpjs = {row["cnpj"] for row in reader}
+
+    new_companies = [company for company in companies if company.get("cnpj", "N/A") not in existing_cnpjs]
+    if not new_companies:
+        print("Nenhum novo registro para salvar.")
+        return
+
+    with open(filename, mode='a', newline='', encoding='utf-8') as csvfile:
+        fieldnames = ["razao_social", "cnpj", "endereco", "coord"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        if not existing_cnpjs:
+            writer.writeheader()
+
+        for company in new_companies:
+            endereco = company.get("endereco", "N/A")
+            try:
+                location = geolocator.geocode(endereco, timeout=10)
+                coord = [location.latitude, location.longitude] if location else ["N/A", "N/A"]
+            except Exception as e:
+                coord = ["N/A", "N/A"]
+                print(f"Erro ao obter coordenadas para {endereco}: {e}")
+
+            writer.writerow({
+                "razao_social": company.get("razao_social", "N/A"),
+                "cnpj": company.get("cnpj", "N/A"),
+                "endereco": endereco,
+                "coord": coord
+            })
+    print(f"{len(new_companies)} novo(s) registro(s) salvo(s).")
+
+def exponential_backoff_retry_request(url, session, max_attempts=5):
+    attempt = 1
+    while attempt <= max_attempts:
         try:
-            # Remove caracteres indesejados e separa as coordenadas
-            coord = coord.strip("[]").split(",")
-            return float(coord[0]), float(coord[1])
-        except ValueError:
-            return None, None
+            response = session.get(url)
+            if response.status_code == 200:
+                return response
+        except requests.exceptions.RequestException as e:
+            print(f"Erro ao tentar conexão. Tentativa {attempt}: {str(e)}")
 
-    # Carrega o CSV e aplica a conversão de coordenadas automaticamente
-    df = pd.read_csv('./data/empresas.csv', encoding='utf-8')
-    df[['latitude', 'longitude']] = df['coord'].apply(lambda x: pd.Series(converter_coordenadas(x)))
+        delay = attempt ** 2
+        print(f"Aguardando {delay} segundos para nova tentativa.")
+        time.sleep(delay)
+        attempt += 1
+    print("Erro persistente após múltiplas tentativas. Verifique a conexão com a API.")
+    return None
 
-    # Filtra as empresas com coordenadas válidas e converte para uma lista de dicionários
-    empresas = df.drop(columns=['coord']).to_dict(orient='records')
-    return empresas
+def get_companies_with_address():
+    session = create_session_with_retry()
+    start = 0
+    all_companies = []
+    companies_without_cnpj = []
+    delay = 1
 
-empresas = carregar_empresas()
+    while True:
+        params = {
+            "order": { "DATE_CREATE": "ASC" },
+            "select": [ "ID", "TITLE", "UF_CRM_1701275490640" ],
+            "start": start,
+        }
+        response = requests.post(BITRIX_URL, json=params)
+        if response.status_code == 200:
+            result = response.json()
+            if "error" in result:
+                print(f"Erro: {result['error_description']}")
+                break
+            else:
+                companies = result.get("result", [])
+                for company in companies:
+                    cnpj = company.get("UF_CRM_1701275490640")
+                    if cnpj:
+                        cnpj = cnpj.replace('.', '').replace('/', '').replace('-', '')
+                        brasilapi_url = f"{BRASILAPI_URL}{cnpj}"
+                        brasilapi_response = exponential_backoff_retry_request(brasilapi_url, session)
 
-# Contadores de sucesso e falha
-total_processadas = 0
-total_sucesso = 0
-total_falha = 0
+                        if brasilapi_response and brasilapi_response.status_code == 200:
+                            address_data = brasilapi_response.json()
+                            endereco = f"{address_data['logradouro']} {address_data.get('numero', 'S/N')}, {address_data['municipio']}, Brasil"
+                        else:
+                            endereco = "Endereço não encontrado"
 
-@app.route('/')
-def index():
-    return render_template('indexMaps.html')
+                        all_companies.append({
+                            "razao_social": company.get("TITLE", "N/A"),
+                            "cnpj": company.get("UF_CRM_1701275490640", "N/A"),
+                            "endereco": endereco,
+                        })
+                        save_companies_to_csv(all_companies)
+                        time.sleep(delay)
+                        delay += DELAY_INCREMENT
+                    else:
+                        company_link = f"https://setup.bitrix24.com.br/crm/company/details/{company['ID']}/"
+                        companies_without_cnpj.append({
+                            "razao_social": company.get("TITLE", "N/A"),
+                            "link": company_link,
+                        })
+                        print(f"CNPJ não encontrado para a empresa ID {company['ID']}. Link: {company_link}")
 
-@app.route('/api/empresas/total')
-def total_empresas():
-    return jsonify(total=len(empresas))
-
-@app.route('/api/empresa')
-def empresa():
-    global total_processadas, total_sucesso, total_falha
-    index = int(request.args.get('id', 0))
-    total_processadas += 1
-
-    if index < len(empresas):
-        empresa = empresas[index]
-        latitude = empresa.get("latitude")
-        longitude = empresa.get("longitude")
-
-        # Incrementa contadores de sucesso e falha
-        if latitude is not None and longitude is not None:
-            total_sucesso += 1
+                if "next" in result:
+                    start = result["next"]
+                else:
+                    break
         else:
-            total_falha += 1
+            print(f"Falha na requisição. Status code: {response.status_code}, Detalhes: {response.text}")
+            break
 
-        # Calcular porcentagens de sucesso e falha
-        porcentagem_sucesso = (total_sucesso / total_processadas) * 100
-        porcentagem_falha = (total_falha / total_processadas) * 100
+    return all_companies, companies_without_cnpj
 
-        return jsonify({
-            "nome_fantasia": empresa.get("nome_fantasia", "Nome não disponível"),
-            "endereco": empresa.get("endereco"),
-            "cnpj": empresa.get("cnpj", "CNPJ não disponível"),
-            "latitude": latitude if latitude is not None else "Não disponível",
-            "longitude": longitude if longitude is not None else "Não disponível",
-            "percentual_sucesso": f"{porcentagem_sucesso:.2f}%",
-            "percentual_falha": f"{porcentagem_falha:.2f}%"
-        })
-
-    return jsonify({
-        "message": "Empresa não encontrada.",
-        "percentual_sucesso": f"{(total_sucesso / total_processadas) * 100:.2f}%",
-        "percentual_falha": f"{(total_falha / total_processadas) * 100:.2f}%"
-    }), 404
-
-if __name__ == '__main__':
-    app.run(debug=True)
+all_companies_with_address, companies_without_cnpj = get_companies_with_address()
+print(f"Total de empresas com endereço completo retornadas: {len(all_companies_with_address)}")
+print(f"Empresas sem CNPJ e seus links:")
+for company in companies_without_cnpj:
+    print(f"Empresa: {company['razao_social']}, Link: {company['link']}")
