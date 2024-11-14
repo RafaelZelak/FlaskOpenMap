@@ -22,3 +22,7 @@ body {
 .empresa-item label {
     cursor: pointer;
 }
+
+.leaflet-routing-container-hide{
+    display: none;
+}
