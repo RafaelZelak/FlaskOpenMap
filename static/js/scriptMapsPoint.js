@@ -1,12 +1,13 @@
 // Inicialização do mapa com vista inicial para o Brasil
 const map = L.map('map').setView([-14.235, -51.9253], 4);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 20,
-    attribution: '© OpenStreetMap contributors'
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/attributions">CartoDB</a>',
+    maxZoom: 20
 }).addTo(map);
 
 let currentCircle = null;
+let currentMarker = null;
 const markers = [];
 
 // Variáveis para controle do raio e ponto central
@@ -19,8 +20,15 @@ async function carregarListaEmpresas() {
     try {
         const response = await fetch('/api/empresas');
         if (response.ok) {
-            listaEmpresas = await response.json();
+            const empresas = await response.json();
+
+            // Filtra empresas com latitude e longitude válidos
+            listaEmpresas = empresas.filter(empresa => empresa.latitude !== null && empresa.longitude !== null);
+
             atualizarListaEmpresas();
+
+            // Atualiza o contador total de empresas
+            document.getElementById('result-count').textContent = `${listaEmpresas.length} resultados`;
         } else {
             console.error('Erro ao carregar empresas:', response.statusText);
         }
@@ -52,14 +60,32 @@ function atualizarListaEmpresas(filtro = '') {
     toggleEmpresaList(empresasFiltradas.length > 0);
 }
 
-// Função para exibir o ponto da empresa selecionada e permitir inserir o raio
 function marcarEmpresaSelecionada() {
     if (selectedEmpresa.latitude && selectedEmpresa.longitude) {
-        if (currentCircle) currentCircle.remove();
-        const marker = L.marker([selectedEmpresa.latitude, selectedEmpresa.longitude], {
+        console.log("Selecionando nova empresa e redefinindo o mapa.");
+
+        // Remove marcador e círculo anterior
+        if (currentCircle) {
+            currentCircle.remove();
+            currentCircle = null;
+            console.log("Círculo anterior removido.");
+        }
+        if (currentMarker) {
+            currentMarker.remove();
+            currentMarker = null;
+            console.log("Marcador anterior removido.");
+        }
+        markers.forEach(marker => marker.remove());
+        markers.length = 0;
+        console.log("Todos os marcadores anteriores foram removidos.");
+
+        // Cria um novo marcador no ponto central selecionado
+        currentMarker = L.marker([selectedEmpresa.latitude, selectedEmpresa.longitude], {
             icon: criarIconePersonalizado('red')
         }).addTo(map);
-        marker.bindPopup(`
+
+        // Abre o popup e associa eventos ao popup e ao botão dentro dele
+        currentMarker.bindPopup(`
             <b>${selectedEmpresa.razao_social}</b><br>
             ${selectedEmpresa.endereco}<br>
             ${selectedEmpresa.cnpj}<br>
@@ -68,25 +94,76 @@ function marcarEmpresaSelecionada() {
                 <button id="searchWithinRadius" class="bg-blue-500 text-white px-2 py-1 rounded ml-2">Procurar</button>
             </div>
         `).openPopup();
+
         map.setView([selectedEmpresa.latitude, selectedEmpresa.longitude], 12);
 
-        document.getElementById('searchWithinRadius').addEventListener('click', () => {
+        // Configura o evento de clique imediatamente após o primeiro carregamento do popup
+        setTimeout(() => {
+            configurarEventoDeClique();
+        }, 500);
+
+        // Reconfigura o evento de clique toda vez que o popup for aberto novamente
+        currentMarker.on('popupopen', () => {
+            console.log("Popup aberto novamente, reconfigurando o evento de clique.");
+            configurarEventoDeClique();
+        });
+
+        // Limpa o evento de clique do botão quando o popup fecha
+        currentMarker.on('popupclose', () => {
+            console.log("Popup fechado, limpando o evento de clique do botão de busca.");
+            const searchButton = document.getElementById('searchWithinRadius');
+            if (searchButton) {
+                searchButton.replaceWith(searchButton.cloneNode(true));
+            }
+        });
+    } else {
+        console.error("Dados de latitude e longitude não encontrados para a empresa selecionada.");
+    }
+}
+
+// Função para configurar o evento de clique no botão
+function configurarEventoDeClique() {
+    const searchButton = document.getElementById('searchWithinRadius');
+    if (searchButton) {
+        searchButton.addEventListener('click', async () => {
+            console.log("Botão de busca clicado, processando busca.");
+
             const raioInput = document.getElementById('raioInput');
             const raioKm = parseFloat(raioInput.value);
             if (isNaN(raioKm) || raioKm <= 0) {
                 alert("Por favor, insira um valor de raio válido.");
                 return;
             }
+
             raioAtual = raioKm * 1000;
             pontoCentral = [selectedEmpresa.latitude, selectedEmpresa.longitude];
-            carregarPontosDentroDoRaio();
+
+            if (currentCircle) {
+                currentCircle.remove();
+                console.log("Círculo anterior removido.");
+            }
+
+            currentCircle = L.circle(pontoCentral, {
+                radius: raioAtual,
+                color: '#3f83f8',
+                fillColor: '#3f83f8',
+                fillOpacity: 0.15
+            }).addTo(map);
+
+            console.log("Novo círculo criado no ponto central.");
+            await carregarPontosDentroDoRaio();
         });
+        console.log("Evento de clique associado ao botão com sucesso.");
+    } else {
+        console.error("Botão de busca não encontrado no popup.");
     }
 }
 
 // Função para carregar e exibir os pontos dentro do raio especificado
 async function carregarPontosDentroDoRaio() {
     if (currentCircle) currentCircle.remove();
+
+    // Desenha o círculo no ponto central
     currentCircle = L.circle(pontoCentral, {
         radius: raioAtual,
         color: '#3f83f8',
@@ -95,33 +172,77 @@ async function carregarPontosDentroDoRaio() {
     }).addTo(map);
 
     try {
-        const response = await fetch('/api/empresas'); // Carrega todas as empresas (ou idealmente, uma API filtrada)
+        const response = await fetch('/api/empresas');
         if (response.ok) {
             const empresas = await response.json();
             markers.forEach(marker => marker.remove());
             markers.length = 0;
 
-            empresas.forEach(empresa => {
-                if (empresa.latitude && empresa.longitude) {
-                    // Verifica se é o ponto central, para não adicionar um marcador adicional
-                    const isPontoCentral =
-                        empresa.latitude === pontoCentral[0] &&
-                        empresa.longitude === pontoCentral[1];
+            let count = 0;
+            const resultList = document.getElementById('result-list');
+            resultList.innerHTML = ''; // Limpa a lista antes de adicionar novos itens
 
-                    if (!isPontoCentral) {
+            // Filtra empresas dentro do raio e calcula a distância
+            const empresasComDistancia = empresas
+                .filter(empresa => {
+                    if (empresa.latitude && empresa.longitude) {
+                        const isPontoCentral =
+                            empresa.latitude === pontoCentral[0] &&
+                            empresa.longitude === pontoCentral[1];
+                        if (isPontoCentral) return false; // Ignora o ponto central
+
                         const distancia = map.distance(pontoCentral, [empresa.latitude, empresa.longitude]);
-                        if (distancia <= raioAtual) {
-                            const marker = L.marker([empresa.latitude, empresa.longitude]).addTo(map);
-                            marker.bindPopup(`
-                                <b>${empresa.nome_fantasia}</b><br>
-                                ${empresa.endereco}<br>
-                                ${empresa.cnpj}
-                            `);
-                            markers.push(marker);
-                        }
+                        empresa.distanciaKm = (distancia / 1000).toFixed(2); // Armazena distância em km
+                        return distancia <= raioAtual;
                     }
-                }
+                    return false;
+                })
+                .sort((a, b) => a.distanciaKm - b.distanciaKm); // Ordena pela distância
+
+            // Itera pelas empresas ordenadas e adiciona os marcadores e itens de lista
+            empresasComDistancia.forEach(empresa => {
+                // Cria e adiciona o marcador azul ao mapa
+                const marker = L.marker([empresa.latitude, empresa.longitude], {
+                    icon: criarIconePersonalizado('blue') // Cor padrão: azul
+                }).addTo(map);
+                marker.bindPopup(`
+                    <b>${empresa.razao_social}</b><br>
+                    ${empresa.endereco}<br>
+                    ${empresa.cnpj}<br>
+                    Distância: ${empresa.distanciaKm} km
+                `);
+                markers.push(marker);
+                count++;
+
+                // Cria um item de lista para a empresa e define eventos de mouseover, mouseout e click
+                const listItem = document.createElement('li');
+                listItem.className = 'border p-2 rounded hover:bg-gray-200';
+                listItem.textContent = `${empresa.razao_social} - ${empresa.distanciaKm} km`;
+
+                // Salva o ícone original para restaurá-lo
+                const originalIcon = marker.options.icon;
+
+                // Evento de mouseover para alterar a cor do marcador
+                listItem.addEventListener('mouseover', () => {
+                    marker.setIcon(criarIconePersonalizado('green')); // Cor ao passar o mouse: verde
+                });
+
+                // Evento de mouseout para retornar à cor original
+                listItem.addEventListener('mouseout', () => {
+                    marker.setIcon(originalIcon);
+                });
+
+                // Evento de clique para centralizar e abrir o popup da empresa
+                listItem.addEventListener('click', () => {
+                    map.setView([empresa.latitude, empresa.longitude], 14); // Zoom na localização da empresa
+                    marker.openPopup(); // Abre o popup do marcador
+                });
+
+                resultList.appendChild(listItem);
             });
+
+            // Atualiza o contador de resultados dentro do raio
+            document.getElementById('result-count').textContent = `${count} resultados`;
         } else {
             console.error('Erro ao carregar empresas:', response.statusText);
         }
@@ -132,7 +253,7 @@ async function carregarPontosDentroDoRaio() {
 
 // Função para criar ícone personalizado
 function criarIconePersonalizado(cor) {
-    const iconSize = cor === 'red' ? [40, 65] : [25, 41]; // Ícone maior para o ponto central
+    const iconSize = cor === 'red' ? [35, 60] : [25, 41]; // Ícone maior para o ponto central
     const iconAnchor = cor === 'red' ? [20, 65] : [12, 41];
 
     return L.icon({
