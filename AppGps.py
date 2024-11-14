@@ -1,62 +1,68 @@
-from flask import Flask, jsonify, render_template
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
-import json
-import re
+from flask import Flask, jsonify, render_template, request
+import csv
+import ast
 
 app = Flask(__name__)
 
-# Inicializa o geolocalizador
-geolocator = Nominatim(user_agent="geoapi_exercises", timeout=10)
-
-# Função para formatar o endereço
-def formatar_endereco(endereco):
-    match = re.match(r'([^,]+),.*- (.*) - (..),.*', endereco)
-    if match:
-        rua = match.group(1).strip()
-        cidade = match.group(2).strip()
-        estado = match.group(3).strip()
-        return f"{rua}, {cidade}, {estado}, Brasil"
-    return endereco
-
-# Função para obter coordenadas
-def obter_coordenadas(endereco):
-    try:
-        location = geolocator.geocode(endereco)
-        if location:
-            return location.latitude, location.longitude
-    except GeocoderTimedOut:
-        print(f"Geocodificação para '{endereco}' falhou.")
-    return None, None
-
-# Processa os dados do arquivo JSON
-def processar_empresas():
-    with open('empresas.json', 'r', encoding='utf-8') as file:
-        empresas = json.load(file)
-
+# Função para processar o arquivo CSV
+def processar_empresas_csv():
     resultados = []
-    for empresa in empresas:
-        logradouro = empresa.get("logradouro")
-        if logradouro:
-            endereco_formatado = formatar_endereco(logradouro)
-            latitude, longitude = obter_coordenadas(endereco_formatado)
-            if latitude and longitude:
-                resultados.append({
-                    "nome_fantasia": empresa.get("nome_fantasia", "Nome não disponível"),
-                    "endereco": logradouro,
-                    "telefone_1": empresa.get("telefone_1", "Telefone não disponível"),
-                    "latitude": latitude,
-                    "longitude": longitude
-                })
+    with open('data/empresas.csv', 'r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            try:
+                coordenadas = ast.literal_eval(row["coord"])  # Converte string para lista de coordenadas
+                # Filtra coordenadas inválidas como None, "N/A", ou coordenadas não numéricas
+                if (
+                    isinstance(coordenadas, list) and len(coordenadas) == 2 and
+                    coordenadas[0] not in [None, "N/A", "null", "None"] and
+                    coordenadas[1] not in [None, "N/A", "null", "None"]
+                ):
+                    latitude, longitude = float(coordenadas[0]), float(coordenadas[1])
+                    resultados.append({
+                        "razao_social": row.get("razao_social", "Razão Social não disponível"),
+                        "cnpj": row.get("cnpj", "CNPJ não disponível"),
+                        "endereco": row.get("endereco", "Endereço não disponível"),
+                        "latitude": latitude,
+                        "longitude": longitude
+                    })
+            except (ValueError, SyntaxError, KeyError, TypeError):
+                # Ignora empresas sem coordenadas válidas
+                continue
     return resultados
 
 @app.route('/')
 def index():
     return render_template('indexGps.html')
 
+@app.route('/api/empresas/lista')
+def listar_empresas():
+    empresas = processar_empresas_csv()
+    return jsonify(empresas)
+
 @app.route('/api/empresas')
 def empresas():
-    return jsonify(processar_empresas())
+    empresa1 = request.args.get('empresa1')
+    empresa2 = request.args.get('empresa2')
+
+    with open('data/empresas.csv', 'r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        empresas = list(reader)
+
+    # Filtra as empresas com base no nome ou CNPJ
+    selecionadas = [
+        empresa for empresa in empresas
+        if empresa1 in (empresa['razao_social'], empresa['cnpj']) or
+           empresa2 in (empresa['razao_social'], empresa['cnpj'])
+    ]
+
+    # Converte coordenadas de string para float
+    for empresa in selecionadas:
+        coords = ast.literal_eval(empresa['coord'])
+        empresa['latitude'] = coords[0]
+        empresa['longitude'] = coords[1]
+
+    return jsonify(selecionadas)
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5001)

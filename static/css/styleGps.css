@@ -26,3 +26,45 @@ body {
 .leaflet-routing-container-hide{
     display: none;
 }
+
+.leaflet-routing-container {
+    background-color: aliceblue;
+    overflow-y: auto;
+    height: 600px;
+    width: 400px;
+    bottom: 10px;
+    right: 10px; /* Espaçamento da direita */
+    z-index: 1000; /* Garante que o elemento fique acima de outros */
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Sombras para destacar o elemento */
+    border: none;
+}
+
+
+.leaflet-routing-container h2{
+    display: none;
+}
+
+.sugestoes {
+    position: fixed;
+    background-color: white;
+    border: 1px solid #ccc;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 300px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: none;
+}
+.sugestoes ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+.sugestoes li {
+    padding: 5px;
+    cursor: pointer;
+}
+.sugestoes li:hover {
+    background-color: #f0f0f0;
+}
