@@ -1,143 +1,96 @@
+import pandas as pd
 import requests
+import csv  # Importação do módulo csv para uso de QUOTE_MINIMAL
 import time
-import csv
-import os
-from geopy.geocoders import Nominatim
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
-BITRIX_URL = "https://setup.bitrix24.com.br/rest/301/gyer7nrqxonhk609/crm.company.list.json"
-BRASILAPI_URL = "https://brasilapi.com.br/api/cnpj/v1/"
-DELAY_INCREMENT = 0
+# Caminho do arquivo CSV
+csv_path = "data/empresas.csv"
 
-geolocator = Nominatim(user_agent="MeuProjetoGeoAPI - Rafael Zelak", timeout=10)
+# URL da API do Bitrix24
+bitrix_url = "https://setup.bitrix24.com.br/rest/301/gyer7nrqxonhk609/crm.company.list.json"
 
-def create_session_with_retry():
-    session = requests.Session()
-    retry = Retry(
-        total=5,  # Número máximo de re-tentativas
-        backoff_factor=1,
-        status_forcelist=[429, 500, 502, 503, 504]
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
-    return session
+# Dicionário com as opções do campo
+opcoes_campo = {
+    233: "Acessórias",
+    235: "Acessórias + KOMUNIC",
+    237: "Sittax",
+    655: "Sittax / Acessórias",
+    699: "Sittax / Acessórias + KOMUNIC",
+    701: "Best Doctor"
+}
 
-def save_companies_to_csv(companies, filename="data/empresas.csv"):
-    existing_cnpjs = set()
-    if os.path.isfile(filename):
-        with open(filename, mode='r', newline='', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            existing_cnpjs = {row["cnpj"] for row in reader}
+# Lê o arquivo CSV completo
+df = pd.read_csv(csv_path)
 
-    new_companies = [company for company in companies if company.get("cnpj", "N/A") not in existing_cnpjs]
-    if not new_companies:
-        print("Nenhum novo registro para salvar.")
-        return
+# Se a coluna "empresas" não existir, crie uma coluna vazia
+if 'empresas' not in df.columns:
+    df['empresas'] = ""
 
-    with open(filename, mode='a', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ["razao_social", "cnpj", "endereco", "coord"]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        if not existing_cnpjs:
-            writer.writeheader()
-
-        for company in new_companies:
-            endereco = company.get("endereco", "N/A")
-            try:
-                location = geolocator.geocode(endereco, timeout=10)
-                coord = [location.latitude, location.longitude] if location else ["N/A", "N/A"]
-            except Exception as e:
-                coord = ["N/A", "N/A"]
-                print(f"Erro ao obter coordenadas para {endereco}: {e}")
-
-            writer.writerow({
-                "razao_social": company.get("razao_social", "N/A"),
-                "cnpj": company.get("cnpj", "N/A"),
-                "endereco": endereco,
-                "coord": coord
-            })
-    print(f"{len(new_companies)} novo(s) registro(s) salvo(s).")
-
-def exponential_backoff_retry_request(url, session, max_attempts=5):
-    attempt = 1
-    while attempt <= max_attempts:
-        try:
-            response = session.get(url)
-            if response.status_code == 200:
-                return response
-        except requests.exceptions.RequestException as e:
-            print(f"Erro ao tentar conexão. Tentativa {attempt}: {str(e)}")
-
-        delay = attempt ** 2
-        print(f"Aguardando {delay} segundos para nova tentativa.")
-        time.sleep(delay)
-        attempt += 1
-    print("Erro persistente após múltiplas tentativas. Verifique a conexão com a API.")
-    return None
-
-def get_companies_with_address():
-    session = create_session_with_retry()
-    start = 0
-    all_companies = []
-    companies_without_cnpj = []
-    delay = 1
+# Função para buscar o valor UF_CRM_1708446996746 no Bitrix com tentativas crescentes
+def buscar_valor_bitrix(razao_social):
+    payload = {
+        "filter[TITLE]": razao_social,
+        "select[]": ["UF_CRM_1708446996746"]
+    }
+    tentativas = 0
 
     while True:
-        params = {
-            "order": { "DATE_CREATE": "ASC" },
-            "select": [ "ID", "TITLE", "UF_CRM_1701275490640" ],
-            "start": start,
-        }
-        response = requests.post(BITRIX_URL, json=params)
-        if response.status_code == 200:
-            result = response.json()
-            if "error" in result:
-                print(f"Erro: {result['error_description']}")
-                break
-            else:
-                companies = result.get("result", [])
-                for company in companies:
-                    cnpj = company.get("UF_CRM_1701275490640")
-                    if cnpj:
-                        cnpj = cnpj.replace('.', '').replace('/', '').replace('-', '')
-                        brasilapi_url = f"{BRASILAPI_URL}{cnpj}"
-                        brasilapi_response = exponential_backoff_retry_request(brasilapi_url, session)
+        try:
+            response = requests.get(bitrix_url, params=payload)
 
-                        if brasilapi_response and brasilapi_response.status_code == 200:
-                            address_data = brasilapi_response.json()
-                            endereco = f"{address_data['logradouro']} {address_data.get('numero', 'S/N')}, {address_data['municipio']}, Brasil"
+            # Checa o status da resposta
+            if response.status_code == 200:
+                data = response.json()
+
+                # Verifica se a resposta contém dados
+                if data.get("result"):
+                    # Converte o valor retornado para inteiro antes de procurar no dicionário
+                    try:
+                        campo_valor = data["result"][0].get("UF_CRM_1708446996746")
+                        if campo_valor is not None:
+                            try:
+                                codigo = int(campo_valor)
+                                return opcoes_campo.get(codigo, "N/A")
+                            except ValueError:
+                                return "N/A"
                         else:
-                            endereco = "Endereço não encontrado"
-
-                        all_companies.append({
-                            "razao_social": company.get("TITLE", "N/A"),
-                            "cnpj": company.get("UF_CRM_1701275490640", "N/A"),
-                            "endereco": endereco,
-                        })
-                        save_companies_to_csv(all_companies)
-                        time.sleep(delay)
-                        delay += DELAY_INCREMENT
-                    else:
-                        company_link = f"https://setup.bitrix24.com.br/crm/company/details/{company['ID']}/"
-                        companies_without_cnpj.append({
-                            "razao_social": company.get("TITLE", "N/A"),
-                            "link": company_link,
-                        })
-                        print(f"CNPJ não encontrado para a empresa ID {company['ID']}. Link: {company_link}")
-
-                if "next" in result:
-                    start = result["next"]
+                            return "N/A"
+                    except ValueError:
+                        return "N/A"
                 else:
-                    break
-        else:
-            print(f"Falha na requisição. Status code: {response.status_code}, Detalhes: {response.text}")
-            break
+                    return "Não encontrado"
 
-    return all_companies, companies_without_cnpj
+            elif response.status_code == 503:  # Erro de serviço indisponível
+                print(f"Erro 503: Serviço indisponível para {razao_social}. Tentando novamente em {2 ** tentativas} segundos...")
+                time.sleep(2 ** tentativas)  # Tempo de espera crescente
+                tentativas += 1
+                if tentativas > 5:  # Limite de tentativas
+                    return f"Erro: {response.status_code}"
 
-all_companies_with_address, companies_without_cnpj = get_companies_with_address()
-print(f"Total de empresas com endereço completo retornadas: {len(all_companies_with_address)}")
-print(f"Empresas sem CNPJ e seus links:")
-for company in companies_without_cnpj:
-    print(f"Empresa: {company['razao_social']}, Link: {company['link']}")
+            else:
+                return f"Erro: {response.status_code}"
+
+        except requests.RequestException as e:
+            print(f"Erro de requisição para {razao_social}: {e}")
+            return "Erro de conexão"
+
+# Itera sobre as empresas, busca o valor no Bitrix e atualiza o CSV em tempo real
+for index, row in df.iterrows():
+    # Se o valor da coluna "empresas" já está preenchido e pertence às opções, ignora
+    if row['empresas'] in opcoes_campo.values():
+        print(f"Linha {index + 1} - Razão Social: {row['razao_social']} - Ignorado (já preenchido)")
+        continue
+
+    razao_social = row['razao_social'].strip()  # Remove espaços extras
+    valor = buscar_valor_bitrix(razao_social)
+
+    # Atualiza a coluna "empresas" no DataFrame sem aspas adicionais
+    df.at[index, 'empresas'] = valor
+
+    # Log da atualização
+    print(f"Linha {index + 1} - Razão Social: {razao_social} - Empresas: {valor}")
+
+    # Salva as alterações no CSV após cada atualização
+    df.to_csv(csv_path, index=False, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+print("CSV atualizado em tempo real com sucesso!")
