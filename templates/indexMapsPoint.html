@@ -15,6 +15,36 @@
 
     <!-- Sidebar -->
     <div id="sidebar" class="flex-1 max-w-md p-4 bg-white shadow-lg overflow-y-auto">
+        <div class="mb-4">
+            <h4 class="text-lg font-semibold">Filtrar por Grupos</h4>
+            <div id="group-filters" class="grid grid-cols-2 gap-2">
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" value="Acessórias" checked>
+                    <span>Acessórias</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" value="Acessórias + KOMUNIC" checked>
+                    <span>Acessórias + KOMUNIC</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" value="Sittax" checked>
+                    <span>Sittax</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" value="Sittax / Acessórias" checked>
+                    <span>Sittax / Acessórias</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" value="Sittax / Acessórias + KOMUNIC" checked>
+                    <span>Sittax / Acessórias + KOMUNIC</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" value="Best Doctor" checked>
+                    <span>Best Doctor</span>
+                </label>
+            </div>
+        </div>
+
         <div class="relative mb-4">
             <input type="text" id="empresa-dropdown" class="w-full p-2 border border-gray-300 rounded" placeholder="Selecione uma empresa..." autocomplete="off">
             <ul id="empresa-list" class="absolute bg-white border border-gray-300 rounded w-full max-h-48 overflow-y-auto hidden"></ul>

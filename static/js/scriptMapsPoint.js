@@ -15,6 +15,25 @@ let raioAtual = null;
 let pontoCentral = null;
 let selectedEmpresa = null;
 
+let gruposAtivos = new Set([
+    'Acessórias',
+    'Acessórias + KOMUNIC',
+    'Sittax',
+    'Sittax / Acessórias',
+    'Sittax / Acessórias + KOMUNIC',
+    'Best Doctor'
+]);
+
+document.getElementById('group-filters').addEventListener('change', (event) => {
+    const checkbox = event.target;
+    if (checkbox.checked) {
+        gruposAtivos.add(checkbox.value);
+    } else {
+        gruposAtivos.delete(checkbox.value);
+    }
+    carregarPontosDentroDoRaio(); // Atualiza os pontos ao alterar filtros
+});
+
 // Função para carregar a lista de empresas no dropdown
 async function carregarListaEmpresas() {
     try {
@@ -160,6 +179,39 @@ function configurarEventoDeClique() {
 }
 
 // Função para carregar e exibir os pontos dentro do raio especificado
+function definirCorEGrupo(empresa) {
+    const nomeNormalizado = normalizeString(empresa.empresas);
+
+    if (nomeNormalizado === normalizeString('Best Doctor')) {
+        return { cor: 'blue', grupo: 'Best Doctor' };
+    } else if (
+        nomeNormalizado === normalizeString('Acessórias') ||
+        nomeNormalizado === normalizeString('Acessórias + KOMUNIC')
+    ) {
+        return { cor: 'yellow', grupo: 'Acessórias' };
+    } else if (nomeNormalizado === normalizeString('Sittax')) {
+        return { cor: 'orange', grupo: 'Sittax' };
+    } else if (
+        nomeNormalizado === normalizeString('Sittax / Acessórias') ||
+        nomeNormalizado === normalizeString('Sittax / Acessórias + KOMUNIC')
+    ) {
+        return { cor: 'green', grupo: 'Sittax / Acessórias' };
+    } else {
+        return { cor: 'gray', grupo: 'Outros' }; // Cor padrão para grupos não especificados
+    }
+}
+
+// Função para normalizar strings, removendo caracteres especiais
+function normalizeString(str) {
+    return str
+        .normalize('NFD') // Remove acentos
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacríticos
+        .replace(/[^a-zA-Z0-9 /+]/g, '') // Remove caracteres especiais
+        .toLowerCase() // Normaliza para minúsculas
+        .trim(); // Remove espaços extras
+}
+
+// Modifique a função `carregarPontosDentroDoRaio` para usar a nova lógica
 async function carregarPontosDentroDoRaio() {
     if (currentCircle) currentCircle.remove();
 
@@ -184,32 +236,39 @@ async function carregarPontosDentroDoRaio() {
 
             // Filtra empresas dentro do raio e calcula a distância
             const empresasComDistancia = empresas
-                .filter(empresa => {
-                    if (empresa.latitude && empresa.longitude) {
-                        const isPontoCentral =
-                            empresa.latitude === pontoCentral[0] &&
-                            empresa.longitude === pontoCentral[1];
-                        if (isPontoCentral) return false; // Ignora o ponto central
+            .filter(empresa => {
+                if (empresa.latitude && empresa.longitude) {
+                    const isPontoCentral =
+                        empresa.latitude === pontoCentral[0] &&
+                        empresa.longitude === pontoCentral[1];
+                    if (isPontoCentral) return false; // Ignora o ponto central
 
-                        const distancia = map.distance(pontoCentral, [empresa.latitude, empresa.longitude]);
-                        empresa.distanciaKm = (distancia / 1000).toFixed(2); // Armazena distância em km
-                        return distancia <= raioAtual;
-                    }
-                    return false;
-                })
-                .sort((a, b) => a.distanciaKm - b.distanciaKm); // Ordena pela distância
+                    const { grupo } = definirCorEGrupo(empresa); // Define o grupo da empresa
+                    if (!gruposAtivos.has(grupo)) return false; // Filtra pelos grupos ativos
+
+                    const distancia = map.distance(pontoCentral, [empresa.latitude, empresa.longitude]);
+                    empresa.distanciaKm = (distancia / 1000).toFixed(2); // Armazena distância em km
+                    return distancia <= raioAtual;
+                }
+                return false;
+            })
+            .sort((a, b) => a.distanciaKm - b.distanciaKm);
 
             // Itera pelas empresas ordenadas e adiciona os marcadores e itens de lista
             empresasComDistancia.forEach(empresa => {
-                // Cria e adiciona o marcador azul ao mapa
+                const { cor, grupo } = definirCorEGrupo(empresa);
+
+                // Cria e adiciona o marcador ao mapa
                 const marker = L.marker([empresa.latitude, empresa.longitude], {
-                    icon: criarIconePersonalizado('blue') // Cor padrão: azul
+                    icon: criarIconePersonalizado(cor)
                 }).addTo(map);
+
                 marker.bindPopup(`
                     <b>${empresa.razao_social}</b><br>
                     ${empresa.endereco}<br>
                     ${empresa.cnpj}<br>
-                    Distância: ${empresa.distanciaKm} km
+                    Distância: ${empresa.distanciaKm} km<br>
+                    Empresa: ${grupo}
                 `);
                 markers.push(marker);
                 count++;
@@ -224,7 +283,7 @@ async function carregarPontosDentroDoRaio() {
 
                 // Evento de mouseover para alterar a cor do marcador
                 listItem.addEventListener('mouseover', () => {
-                    marker.setIcon(criarIconePersonalizado('green')); // Cor ao passar o mouse: verde
+                    marker.setIcon(criarIconePersonalizado('grey')); // Cor ao passar o mouse: verde
                 });
 
                 // Evento de mouseout para retornar à cor original
