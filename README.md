@@ -23,16 +23,12 @@ CENTER REPRESENTACOES CONTABEIS LTDA,00.085.278/0001-09,"GENERAL CARNEIRO 1064, 
     └── 📄 runList.py
 ````
 
-Temos apenas um construtor do Dataframe em CSV, usei dados pegos do Bitrix, mas qualquer dado colocado no seguinte padrão:
-<br>
+Temos apenas um construtor do Dataframe em CSV, usei dados pegos do Bitrix, mas qualquer dado colocado no seguinte padrão:<br><br>
+(Todos os valores devem estar presentes, o "não obrigatório" só quer dizer que não precisa ser o dado indicado em si)
 - razao_social <- Apenas o Nome da empresa (não necessáriamente a razão)
-<br>
 - cnpj <- CNPJ da empresa (não obrigatório)
-<br>
 - endereco <- Endereço da empresa (não obrigatório)
-<br>
 - coord <- Coordenada geográfica da empresa, lat e long (obrigatório)
-<br>
 - empresas < - Aqui fica qualquer "grupo" que você quiser separar, isso irá gerar separação por cor nos pontos do mapa (não obrigatório)
 
 ## Backend
