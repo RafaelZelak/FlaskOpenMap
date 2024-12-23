@@ -24,7 +24,7 @@ CENTER REPRESENTACOES CONTABEIS LTDA,00.085.278/0001-09,"GENERAL CARNEIRO 1064, 
 ````
 
 Temos apenas um construtor do Dataframe em CSV, usei dados pegos do Bitrix, mas qualquer dado colocado no seguinte padrão:
-
+<br>
 - razao_social <- Apenas o Nome da empresa (não necessáriamente a razão)
 <br>
 - cnpj <- CNPJ da empresa (não obrigatório)
